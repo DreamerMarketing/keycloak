@@ -237,7 +237,14 @@ obtain_certificate() {
   systemctl start nginx
 }
 
-obtain_certificate "$keycloak_hostname" --domain "$keycloak_hostname"
+domain_certificate_available=false
+if [[ -s "/etc/letsencrypt/live/${keycloak_hostname}/fullchain.pem" ]] || \
+   obtain_certificate "$keycloak_hostname" --domain "$keycloak_hostname"; then
+  domain_certificate_available=true
+else
+  echo "Warning: domain certificate is unavailable; keeping IP HTTPS active" >&2
+  discovery_url="https://${public_ip}/realms/master/.well-known/openid-configuration"
+fi
 obtain_certificate "$public_ip" --ip-address "$public_ip" --preferred-profile shortlived
 
 cat > "$nginx_config" <<EOF
@@ -250,7 +257,10 @@ server {
         return 301 https://\$host\$request_uri;
     }
 }
+EOF
 
+if [[ "$domain_certificate_available" == true ]]; then
+  cat >> "$nginx_config" <<EOF
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
@@ -269,7 +279,10 @@ server {
         proxy_pass http://127.0.0.1:8080;
     }
 }
+EOF
+fi
 
+cat >> "$nginx_config" <<EOF
 server {
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
