@@ -37,7 +37,9 @@ jobs:
 
       - name: Bootstrap HZT realm without changing master admin
         env:
-          KEYCLOAK_BASE_URL: https://${{ vars.KEYCLOAK_HOSTNAME }}
+          # The current short-lived certificate covers the public IP. Keycloak
+          # still emits the configured DNS hostname as the token issuer.
+          KEYCLOAK_BASE_URL: https://${{ vars.DEPLOY_HOST }}
           KEYCLOAK_REALM: hzt
           KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME: ${{ vars.KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME }}
           KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD }}
