@@ -267,7 +267,7 @@ const result = {
   webClientId,
   apiClientId,
   serviceClientId,
-  serviceClientSecret,
+  serviceClientSecret: serviceSecret,
   protectedAdmin: { realm: "master", username: adminUsername, modified: false },
   audit
 };
