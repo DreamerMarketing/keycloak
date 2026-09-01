@@ -29,8 +29,13 @@ if [[ ! "$DEPLOY_PATH" =~ ^/opt/[A-Za-z0-9._/-]+$ ]]; then
 fi
 
 if [[ ! "$KEYCLOAK_HOSTNAME" =~ ^[A-Za-z0-9.-]+$ ]]; then
-  echo "KEYCLOAK_HOSTNAME must be a DNS hostname" >&2
+  echo "KEYCLOAK_HOSTNAME must be a DNS hostname or IPv4 address" >&2
   exit 1
+fi
+
+keycloak_scheme=https
+if [[ "$KEYCLOAK_HOSTNAME" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+  keycloak_scheme=http
 fi
 
 for identifier in POSTGRES_DB POSTGRES_USER KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME; do
@@ -61,7 +66,7 @@ local_environment_file="$(mktemp)"
 trap 'rm -f "$local_environment_file"' EXIT
 chmod 600 "$local_environment_file"
 
-printf 'POSTGRES_DB=%s\nPOSTGRES_USER=%s\nPOSTGRES_PASSWORD=%s\nKC_DB=postgres\nKC_DB_URL=jdbc:postgresql://hzt-infra-postgres:5432/%s\nKC_DB_USERNAME=%s\nKC_DB_PASSWORD=%s\nKC_BOOTSTRAP_ADMIN_USERNAME=%s\nKC_BOOTSTRAP_ADMIN_PASSWORD=%s\nKC_HOSTNAME=https://%s\nKC_HTTP_ENABLED=true\nKC_PROXY_HEADERS=xforwarded\nKC_HEALTH_ENABLED=true\nKC_METRICS_ENABLED=true\n' \
+printf 'POSTGRES_DB=%s\nPOSTGRES_USER=%s\nPOSTGRES_PASSWORD=%s\nKC_DB=postgres\nKC_DB_URL=jdbc:postgresql://hzt-infra-postgres:5432/%s\nKC_DB_USERNAME=%s\nKC_DB_PASSWORD=%s\nKC_BOOTSTRAP_ADMIN_USERNAME=%s\nKC_BOOTSTRAP_ADMIN_PASSWORD=%s\nKC_HOSTNAME=%s://%s\nKC_HTTP_ENABLED=true\nKC_PROXY_HEADERS=xforwarded\nKC_HEALTH_ENABLED=true\nKC_METRICS_ENABLED=true\n' \
   "$POSTGRES_DB" \
   "$POSTGRES_USER" \
   "$POSTGRES_PASSWORD" \
@@ -70,18 +75,20 @@ printf 'POSTGRES_DB=%s\nPOSTGRES_USER=%s\nPOSTGRES_PASSWORD=%s\nKC_DB=postgres\n
   "$POSTGRES_PASSWORD" \
   "$KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME" \
   "$KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD" \
+  "$keycloak_scheme" \
   "$KEYCLOAK_HOSTNAME" > "$local_environment_file"
 
 ssh "${ssh_options[@]}" "$remote_host" "install -d -m 700 '$DEPLOY_PATH'"
 scp "${ssh_options[@]}" "$local_environment_file" "${remote_host}:${DEPLOY_PATH}/.env.next"
 
 ssh "${ssh_options[@]}" "$remote_host" bash -s -- \
-  "$DEPLOY_PATH" "$KEYCLOAK_HOSTNAME" "$deploy_revision" <<'REMOTE_SCRIPT'
+  "$DEPLOY_PATH" "$KEYCLOAK_HOSTNAME" "$keycloak_scheme" "$deploy_revision" <<'REMOTE_SCRIPT'
 set -Eeuo pipefail
 
 deploy_path="$1"
 keycloak_hostname="$2"
-deploy_revision="$3"
+keycloak_scheme="$3"
+deploy_revision="$4"
 environment_file="${deploy_path}/.env"
 network_name="hzt-infra"
 bootstrap_secret_present=false
@@ -147,8 +154,12 @@ start_keycloak() {
 
 start_keycloak
 
-if ! command -v nginx >/dev/null 2>&1 || ! command -v certbot >/dev/null 2>&1; then
-  echo "Nginx and certbot must be installed" >&2
+if ! command -v nginx >/dev/null 2>&1; then
+  echo "Nginx must be installed" >&2
+  exit 1
+fi
+if [[ "$keycloak_scheme" == https ]] && ! command -v certbot >/dev/null 2>&1; then
+  echo "Certbot must be installed for HTTPS deployment" >&2
   exit 1
 fi
 
@@ -180,7 +191,7 @@ nginx -t
 systemctl reload nginx
 
 local_discovery_url="http://127.0.0.1:8080/realms/master/.well-known/openid-configuration"
-discovery_url="https://${keycloak_hostname}/realms/master/.well-known/openid-configuration"
+discovery_url="${keycloak_scheme}://${keycloak_hostname}/realms/master/.well-known/openid-configuration"
 wait_for_keycloak() {
   for attempt in $(seq 1 60); do
     if curl --fail --silent --show-error --max-time 10 "$local_discovery_url" >/dev/null 2>&1; then
@@ -203,12 +214,14 @@ if [[ "$bootstrap_secret_present" == true ]]; then
   wait_for_keycloak
 fi
 
-certbot --nginx \
-  --domain "$keycloak_hostname" \
-  --non-interactive \
-  --agree-tos \
-  --register-unsafely-without-email \
-  --redirect
+if [[ "$keycloak_scheme" == https ]]; then
+  certbot --nginx \
+    --domain "$keycloak_hostname" \
+    --non-interactive \
+    --agree-tos \
+    --register-unsafely-without-email \
+    --redirect
+fi
 
 curl --fail --silent --show-error "$discovery_url" >/dev/null
 docker ps --filter 'name=hzt-infra-' --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
