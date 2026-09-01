@@ -108,7 +108,6 @@ docker network inspect "$network_name" >/dev/null 2>&1 || docker network create 
 
 docker pull postgres:16-alpine
 docker pull quay.io/keycloak/keycloak:26.7.3
-docker pull caddy:2-alpine
 
 docker rm -f hzt-infra-caddy hzt-infra-keycloak hzt-infra-postgres >/dev/null 2>&1 || true
 
@@ -140,6 +139,7 @@ start_keycloak() {
     --network "$network_name" \
     --restart unless-stopped \
     --memory 2g \
+    --publish 127.0.0.1:8080:8080 \
     --env-file "$environment_file" \
     --label "hzt.deploy.revision=${deploy_revision}" \
     quay.io/keycloak/keycloak:26.7.3 start >/dev/null
@@ -147,29 +147,47 @@ start_keycloak() {
 
 start_keycloak
 
-docker run -d \
-  --name hzt-infra-caddy \
-  --network "$network_name" \
-  --restart unless-stopped \
-  --memory 128m \
-  --publish 80:80 \
-  --publish 443:443 \
-  --volume hzt-infra-caddy-data:/data \
-  --volume hzt-infra-caddy-config:/config \
-  --label "hzt.deploy.revision=${deploy_revision}" \
-  caddy:2-alpine caddy reverse-proxy \
-    --from "https://${keycloak_hostname}" \
-    --to hzt-infra-keycloak:8080 >/dev/null
+if ! command -v nginx >/dev/null 2>&1 || ! command -v certbot >/dev/null 2>&1; then
+  echo "Nginx and certbot must be installed" >&2
+  exit 1
+fi
 
+nginx_config="/etc/nginx/conf.d/hzt-infra.conf"
+cat > "$nginx_config" <<EOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${keycloak_hostname};
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
+        default_type text/plain;
+        try_files \$uri =404;
+    }
+
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_pass http://127.0.0.1:8080;
+    }
+}
+EOF
+
+nginx -t
+systemctl reload nginx
+
+local_discovery_url="http://127.0.0.1:8080/realms/master/.well-known/openid-configuration"
 discovery_url="https://${keycloak_hostname}/realms/master/.well-known/openid-configuration"
 wait_for_keycloak() {
   for attempt in $(seq 1 60); do
-    if curl --fail --silent --show-error --max-time 10 "$discovery_url" >/dev/null 2>&1; then
+    if curl --fail --silent --show-error --max-time 10 "$local_discovery_url" >/dev/null 2>&1; then
       return 0
     fi
     if [[ "$attempt" -eq 60 ]]; then
       docker logs --tail 150 hzt-infra-keycloak >&2
-      docker logs --tail 100 hzt-infra-caddy >&2
       return 1
     fi
     sleep 5
@@ -184,6 +202,13 @@ if [[ "$bootstrap_secret_present" == true ]]; then
   start_keycloak
   wait_for_keycloak
 fi
+
+certbot --nginx \
+  --domain "$keycloak_hostname" \
+  --non-interactive \
+  --agree-tos \
+  --register-unsafely-without-email \
+  --redirect
 
 curl --fail --silent --show-error "$discovery_url" >/dev/null
 docker ps --filter 'name=hzt-infra-' --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
