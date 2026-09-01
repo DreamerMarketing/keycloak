@@ -10,7 +10,7 @@ import org.keycloak.tests.loginfailures.LoginFailureExpirationTest;
 import org.keycloak.tests.model.UserSessionProviderOfflineTest;
 import org.keycloak.tests.model.UserSessionProviderTest;
 import org.keycloak.tests.oauth.RefreshTokenTimeoutsTest;
-import org.keycloak.tests.organization.member.OrganizationMemberTest;
+import org.keycloak.tests.organization.admin.OrganizationMemberTest;
 import org.keycloak.tests.session.SessionTimeoutValidationTest;
 import org.keycloak.tests.sessionlimits.UserSessionLimitsTest;
 

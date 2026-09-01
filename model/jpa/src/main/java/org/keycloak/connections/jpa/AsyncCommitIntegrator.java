@@ -177,4 +177,56 @@ public abstract class AsyncCommitIntegrator implements PreInsertEventListener, P
             s.setProperty(SYNC_REQUIRED, Boolean.TRUE);
         }
     }
+
+    /**
+     * Detects Aurora PostgreSQL with logical replication enabled — a combination where
+     * {@code SET LOCAL synchronous_commit TO OFF} can cause committed transactions to
+     * never appear (or appear with extreme delay) in logical decoding consumers like Debezium.
+     * <p>
+     * Detection: {@code to_regproc('pg_catalog.aurora_version')} is non-null only on Aurora
+     * (standard PostgreSQL returns null without logging ERROR);
+     * {@code SHOW wal_level = 'logical'} indicates a CDC consumer may be reading the WAL.
+     * Fails safe (returns {@code true}) on unexpected errors to avoid silent CDC data loss.
+     *
+     * @see <a href="https://repost.aws/questions/QU_4m9WIVUQ1aC-w4v2MzC7g">Aurora PostgreSQL does not perform logical decoding when synchronous_commit = off</a>
+     */
+    private static boolean isAuroraWithLogicalReplication(SessionFactoryImplementor sf) {
+        try {
+            JdbcConnectionAccess bootstrapJdbcConnectionAccess = sf.getJdbcServices().getBootstrapJdbcConnectionAccess();
+            Connection connection = bootstrapJdbcConnectionAccess.obtainConnection();
+            try {
+                if (!auroraVersionFunctionExists(connection)) {
+                    return false;
+                }
+
+                try (Statement stmt = connection.createStatement();
+                     ResultSet rs = stmt.executeQuery("SHOW wal_level")) {
+                    return rs.next() && "logical".equals(rs.getString(1));
+                }
+            } finally {
+                bootstrapJdbcConnectionAccess.releaseConnection(connection);
+            }
+        } catch (SQLException e) {
+            logger.warn("Failed to detect Aurora/logical replication status; disabling asynchronous commit optimization", e);
+            return true;
+        }
+    }
+
+    /**
+     * Returns whether the Aurora-only {@code aurora_version()} function exists.
+     * Uses {@code to_regproc} so standard PostgreSQL does not log
+     * {@code ERROR: function aurora_version() does not exist}.
+     */
+    static boolean auroraVersionFunctionExists(Connection connection) throws SQLException {
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT to_regproc('pg_catalog.aurora_version') IS NOT NULL")) {
+            return rs.next() && rs.getBoolean(1);
+        }
+    }
+
+    private static void setAsyncCommit(Connection connection) throws SQLException {
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute("SET LOCAL synchronous_commit TO OFF");
+        }
+    }
 }

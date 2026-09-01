@@ -50,7 +50,7 @@ When creating a parameterized scope, you must select a parameter type that deter
 | No
 
 | `username`
-| Validates that the parameter value is the username of an existing, enabled user in the realm. When the realm allows login with email, the parameter can also be an email address. Additionally, a user cannot target themselves with this scope type.
+| Validates that the parameter value is the username of an existing, enabled user in the realm. Additionally, a user cannot target themselves with this scope type.
 
 When this type is selected, an additional *Allow access to user data* switch appears in the scope settings. It controls access checks in the <<_parameterized_scopes_mappers, Parameterized Scope User Property>> mapper.
 | Yes

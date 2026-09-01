@@ -242,7 +242,6 @@ public class GroupResourceTypeFilteringTest extends AbstractPermissionTest {
     }
 
     @Test
-    @DatabaseTest
     public void testViewAllGroupsUsingUserPolicy() {
         List<GroupRepresentation> search = realmAdminClient.realm(realm.getName()).groups().groups();
         assertTrue(search.isEmpty());

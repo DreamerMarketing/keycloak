@@ -20,7 +20,6 @@ import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jwk.JWKBuilder;
 import org.keycloak.jose.jws.Algorithm;
 import org.keycloak.jose.jws.JWSHeader;
-import org.keycloak.json.RawJsonValue;
 import org.keycloak.models.utils.MapperTypeSerializer;
 import org.keycloak.protocol.oauth2.cimd.clientpolicy.condition.ClientIdUriSchemeCondition;
 import org.keycloak.protocol.oauth2.cimd.clientpolicy.executor.ClientIdMetadataDocumentExecutor;
@@ -134,7 +133,7 @@ public final class ClientPoliciesUtil {
             }
             ClientPolicyExecutorRepresentation executor = new ClientPolicyExecutorRepresentation();
             executor.setExecutorProviderId(providerId);
-            executor.setConfiguration(RawJsonValue.of(JsonSerialization.mapper.readValue(JsonSerialization.mapper.writeValueAsBytes(config), JsonNode.class)));
+            executor.setConfiguration(JsonSerialization.mapper.readValue(JsonSerialization.mapper.writeValueAsBytes(config), JsonNode.class));
             profileRep.getExecutors().add(executor);
             return this;
         }
@@ -360,7 +359,7 @@ public final class ClientPoliciesUtil {
             }
             ClientPolicyConditionRepresentation condition = new ClientPolicyConditionRepresentation();
             condition.setConditionProviderId(providerId);
-            condition.setConfiguration(RawJsonValue.of(JsonSerialization.mapper.readValue(JsonSerialization.mapper.writeValueAsBytes(config), JsonNode.class)));
+            condition.setConfiguration(JsonSerialization.mapper.readValue(JsonSerialization.mapper.writeValueAsBytes(config), JsonNode.class));
             policyRep.getConditions().add(condition);
             return this;
         }

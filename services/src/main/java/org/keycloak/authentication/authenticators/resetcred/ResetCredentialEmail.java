@@ -153,6 +153,7 @@ public class ResetCredentialEmail implements Authenticator, AuthenticatorFactory
         UserModel user = context.getUser();
         String actionTokenUserId = context.getAuthenticationSession().getAuthNote(DefaultActionTokenKey.ACTION_TOKEN_USER_ID);
         if (user != null && user.getId().equals(actionTokenUserId)) {
+            context.getUser().setEmailVerified(true);
             context.success();
         } else {
             // not called via action token or any other weird situation

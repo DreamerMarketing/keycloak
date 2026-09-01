@@ -130,7 +130,7 @@ public class KcOidcBrokerIdpLinkActionTest extends AbstractInitializedBaseBroker
             grantPage.assertCurrent();
             grantPage.accept();
 
-            Assertions.assertEquals(oauth.getRedirectUri(), driver.getCurrentUrl());
+            appPage.assertCurrent();
             assertKcActionParams(null, null);
 
             // Check that user is linked to the IDP

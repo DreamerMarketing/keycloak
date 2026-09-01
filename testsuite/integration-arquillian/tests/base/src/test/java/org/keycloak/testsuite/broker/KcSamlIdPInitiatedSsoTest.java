@@ -243,7 +243,7 @@ public class KcSamlIdPInitiatedSsoTest extends AbstractKeycloakTest {
 
         waitForPage("update account information", false);
 
-        updateAccountInformationPage.assertCurrent();
+        assertTrue(updateAccountInformationPage.isCurrent());
         assertThat("We must be on consumer realm right now",
                 driver.getCurrentUrl(), containsString("/auth/realms/" + REALM_CONS_NAME + "/"));
 

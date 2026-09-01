@@ -1578,7 +1578,7 @@ public class OIDCAdvancedRequestParamsTest extends AbstractTestRealmKeycloakTest
 
                 oauth.loginForm().request(jwe.encodeJwe()).open();
 
-                errorPage.assertCurrent();
+                assertTrue(errorPage.isCurrent());
                 assertEquals("Invalid Request", errorPage.getError());
             }
         } finally {

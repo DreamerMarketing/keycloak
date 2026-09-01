@@ -78,7 +78,7 @@ public class DefaultEvaluationContext implements EvaluationContext {
             AccessToken accessToken = ((KeycloakIdentity) this.identity).getAccessToken();
 
             if (accessToken != null) {
-                attributes.put(CLIENT_ID_ATTRIBUTE, Collections.singletonList(accessToken.getIssuedFor()));
+                attributes.put("kc.client.id", Collections.singletonList(accessToken.getIssuedFor()));
             }
         }
 

@@ -471,7 +471,7 @@ public class ResetPasswordTest extends AbstractTestRealmKeycloakTest {
         // check the password works
         oauth.openLoginForm();
         loginPage.login(username, "resetPassword");
-        Assertions.assertTrue(oauth.parseLoginResponse().isSuccess());
+        assertEquals(RequestType.AUTH_RESPONSE, appPage.getRequestType());
     }
 
     public void assertSecondPasswordResetFails(String changePasswordUrl, String clientId) {

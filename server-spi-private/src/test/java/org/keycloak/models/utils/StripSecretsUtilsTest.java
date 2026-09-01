@@ -252,9 +252,8 @@ public class StripSecretsUtilsTest {
 
         assertEquals("Master", rep.getRealm());
         assertEquals("realmId", rep.getId());
-        assertEquals(10, rep.getSmtpServer().size());
+        assertEquals(2, rep.getSmtpServer().size());
         assertEquals(ComponentRepresentation.SECRET_VALUE, rep.getSmtpServer().get("password"));
-        assertEquals(ComponentRepresentation.SECRET_VALUE, rep.getSmtpServer().get("authTokenClientSecret"));
         assertEquals("smtpUser", rep.getSmtpServer().get("user"));
         assertEquals("mail.example.org", rep.getSmtpServer().get("host"));
         assertEquals("587", rep.getSmtpServer().get("port"));

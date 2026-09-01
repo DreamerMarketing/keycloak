@@ -3,4 +3,5 @@ vulnerabilities:
     statement: Not affected, Bootstrap JavaScript component not distributed
   - id: CVE-2025-1647
     statement: Not affected, Bootstrap JavaScript component not distributed
-
+  - id: CVE-2026-45292
+    statement: Mitigation applied in https://github.com/keycloak/keycloak/issues/49570
