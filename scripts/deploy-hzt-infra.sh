@@ -198,7 +198,7 @@ wait_for_keycloak
 
 # Bootstrap credentials are needed only for the first successful startup.
 if [[ "$bootstrap_secret_present" == true ]]; then
-  sed -i '/^KC_BOOTSTRAP_ADMIN_PASSWORD=/d' "$environment_file"
+  sed -i '/^KC_BOOTSTRAP_ADMIN_\(USERNAME\|PASSWORD\)=/d' "$environment_file"
   start_keycloak
   wait_for_keycloak
 fi
