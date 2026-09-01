@@ -1,0 +1,92 @@
+name: Prepare HZT Data IAM migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration_ssh_public_key:
+        description: Short-lived SSH public key used only for the verified IAM migration
+        required: true
+        type: string
+
+concurrency:
+  group: prepare-hzt-data-iam-migration-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: Bootstrap isolated HZT realm and authorize migration
+    runs-on: ubuntu-latest
+    environment: prod
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Validate migration public key
+        env:
+          MIGRATION_SSH_PUBLIC_KEY: ${{ inputs.migration_ssh_public_key }}
+        run: |
+          if [[ ! "$MIGRATION_SSH_PUBLIC_KEY" =~ ^ssh-ed25519\ [A-Za-z0-9+/=]+\ codex-hzt-iam-[0-9]{8}T[0-9]{6}Z$ ]]; then
+            echo "Invalid short-lived migration SSH public key" >&2
+            exit 1
+          fi
+
+      - name: Bootstrap HZT realm without changing master admin
+        env:
+          KEYCLOAK_BASE_URL: https://${{ vars.KEYCLOAK_HOSTNAME }}
+          KEYCLOAK_REALM: hzt
+          KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME: ${{ vars.KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME }}
+          KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD }}
+          KEYCLOAK_TENANT_ALIAS: hzt-demo
+          KEYCLOAK_TENANT_NAME: 婚字头数据平台
+          KEYCLOAK_WEB_ORIGIN: https://47.99.142.148
+          KEYCLOAK_WEB_REDIRECT_URI: https://47.99.142.148/data-platform/*
+          KEYCLOAK_ORGANIZATION_REDIRECT_URL: https://47.99.142.148/data-platform/
+          KEYCLOAK_BOOTSTRAP_OUTPUT: ${{ runner.temp }}/hzt-data-migration-bootstrap.json
+        run: node scripts/bootstrap-hzt-data-realm.mjs --apply
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d "${RUNNER_TEMP}/ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "${RUNNER_TEMP}/ssh/hzt-infra"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "${RUNNER_TEMP}/ssh/known_hosts"
+          chmod 600 "${RUNNER_TEMP}/ssh/hzt-infra" "${RUNNER_TEMP}/ssh/known_hosts"
+
+      - name: Store migration service configuration and authorize temporary key
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          MIGRATION_SSH_PUBLIC_KEY: ${{ inputs.migration_ssh_public_key }}
+        run: |
+          ssh_options=(
+            -i "${RUNNER_TEMP}/ssh/hzt-infra"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=${RUNNER_TEMP}/ssh/known_hosts"
+          )
+          remote="${DEPLOY_USER}@${DEPLOY_HOST}"
+          scp "${ssh_options[@]}" "${RUNNER_TEMP}/hzt-data-migration-bootstrap.json" "${remote}:${DEPLOY_PATH}/hzt-data-migration-bootstrap.json.next"
+          migration_public_key_base64="$(printf '%s' "$MIGRATION_SSH_PUBLIC_KEY" | base64 -w 0)"
+          ssh "${ssh_options[@]}" "$remote" bash -s -- "$DEPLOY_PATH" "$migration_public_key_base64" <<'REMOTE'
+          set -Eeuo pipefail
+          deploy_path="$1"
+          migration_public_key="$(printf '%s' "$2" | base64 -d)"
+          install -m 700 -d /root/.ssh
+          touch /root/.ssh/authorized_keys
+          chmod 600 /root/.ssh/authorized_keys
+          grep -Fvx "$migration_public_key" /root/.ssh/authorized_keys > /root/.ssh/authorized_keys.next || true
+          printf '%s\n' "$migration_public_key" >> /root/.ssh/authorized_keys.next
+          mv /root/.ssh/authorized_keys.next /root/.ssh/authorized_keys
+          chmod 600 /root/.ssh/authorized_keys
+          chmod 600 "${deploy_path}/hzt-data-migration-bootstrap.json.next"
+          mv "${deploy_path}/hzt-data-migration-bootstrap.json.next" "${deploy_path}/hzt-data-migration-bootstrap.json"
+          REMOTE
