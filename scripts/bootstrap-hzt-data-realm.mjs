@@ -150,6 +150,15 @@ if (!apply) {
   process.exit(0);
 }
 
+const userProfile = (await realmRequest("/users/profile")).body;
+if (userProfile.unmanagedAttributePolicy !== "ADMIN_EDIT") {
+  await realmRequest("/users/profile", {
+    method: "PUT",
+    body: JSON.stringify({ ...userProfile, unmanagedAttributePolicy: "ADMIN_EDIT" })
+  }, [200]);
+  audit.push({ action: "restrict_unmanaged_attributes_to_admin_edit" });
+}
+
 const organizationScopes = (await realmRequest("/client-scopes")).body;
 const organizationScope = organizationScopes.find((scope) => scope.name === "organization");
 if (!organizationScope) throw new Error("organization client scope was not created by the organization-enabled realm");
