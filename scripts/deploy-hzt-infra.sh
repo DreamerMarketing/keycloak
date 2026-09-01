@@ -33,9 +33,14 @@ if [[ ! "$KEYCLOAK_HOSTNAME" =~ ^[A-Za-z0-9.-]+$ ]]; then
   exit 1
 fi
 
-keycloak_scheme=https
 if [[ "$KEYCLOAK_HOSTNAME" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-  keycloak_scheme=http
+  echo "KEYCLOAK_HOSTNAME must be the public DNS hostname" >&2
+  exit 1
+fi
+
+if [[ ! "$DEPLOY_HOST" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+  echo "DEPLOY_HOST must be the public IPv4 address" >&2
+  exit 1
 fi
 
 for identifier in POSTGRES_DB POSTGRES_USER KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME; do
@@ -75,19 +80,19 @@ printf 'POSTGRES_DB=%s\nPOSTGRES_USER=%s\nPOSTGRES_PASSWORD=%s\nKC_DB=postgres\n
   "$POSTGRES_PASSWORD" \
   "$KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME" \
   "$KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD" \
-  "$keycloak_scheme" \
+  "https" \
   "$KEYCLOAK_HOSTNAME" > "$local_environment_file"
 
 ssh "${ssh_options[@]}" "$remote_host" "install -d -m 700 '$DEPLOY_PATH'"
 scp "${ssh_options[@]}" "$local_environment_file" "${remote_host}:${DEPLOY_PATH}/.env.next"
 
 ssh "${ssh_options[@]}" "$remote_host" bash -s -- \
-  "$DEPLOY_PATH" "$KEYCLOAK_HOSTNAME" "$keycloak_scheme" "$deploy_revision" <<'REMOTE_SCRIPT'
+  "$DEPLOY_PATH" "$KEYCLOAK_HOSTNAME" "$DEPLOY_HOST" "$deploy_revision" <<'REMOTE_SCRIPT'
 set -Eeuo pipefail
 
 deploy_path="$1"
 keycloak_hostname="$2"
-keycloak_scheme="$3"
+public_ip="$3"
 deploy_revision="$4"
 environment_file="${deploy_path}/.env"
 network_name="hzt-infra"
@@ -158,7 +163,7 @@ if ! command -v nginx >/dev/null 2>&1; then
   echo "Nginx must be installed" >&2
   exit 1
 fi
-if [[ "$keycloak_scheme" == https ]] && ! command -v certbot >/dev/null 2>&1; then
+if ! command -v certbot >/dev/null 2>&1; then
   echo "Certbot must be installed for HTTPS deployment" >&2
   exit 1
 fi
@@ -191,7 +196,7 @@ nginx -t
 systemctl reload nginx
 
 local_discovery_url="http://127.0.0.1:8080/realms/master/.well-known/openid-configuration"
-discovery_url="${keycloak_scheme}://${keycloak_hostname}/realms/master/.well-known/openid-configuration"
+discovery_url="https://${keycloak_hostname}/realms/master/.well-known/openid-configuration"
 wait_for_keycloak() {
   for attempt in $(seq 1 60); do
     if curl --fail --silent --show-error --max-time 10 "$local_discovery_url" >/dev/null 2>&1; then
@@ -214,14 +219,104 @@ if [[ "$bootstrap_secret_present" == true ]]; then
   wait_for_keycloak
 fi
 
-if [[ "$keycloak_scheme" == https ]]; then
-  certbot --nginx \
-    --domain "$keycloak_hostname" \
+obtain_certificate() {
+  local identifier="$1"
+  shift
+  systemctl stop nginx
+  if ! certbot certonly \
+    --standalone \
+    "$@" \
+    --cert-name "$identifier" \
     --non-interactive \
     --agree-tos \
     --register-unsafely-without-email \
-    --redirect
-fi
+    --keep-until-expiring; then
+    systemctl start nginx
+    return 1
+  fi
+  systemctl start nginx
+}
+
+obtain_certificate "$keycloak_hostname" --domain "$keycloak_hostname"
+obtain_certificate "$public_ip" --ip-address "$public_ip" --preferred-profile shortlived
+
+cat > "$nginx_config" <<EOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${keycloak_hostname} ${public_ip};
+
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${keycloak_hostname};
+
+    ssl_certificate /etc/letsencrypt/live/${keycloak_hostname}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${keycloak_hostname}/privkey.pem;
+
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_pass http://127.0.0.1:8080;
+    }
+}
+
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    http2 on;
+    server_name ${public_ip};
+
+    ssl_certificate /etc/letsencrypt/live/${public_ip}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${public_ip}/privkey.pem;
+
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_pass http://127.0.0.1:8080;
+    }
+}
+EOF
+
+cat > /etc/systemd/system/hzt-certbot-renew.service <<'EOF'
+[Unit]
+Description=Renew hzt-infra TLS certificates
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/certbot renew --non-interactive --pre-hook "systemctl stop nginx" --post-hook "systemctl start nginx" --deploy-hook "systemctl reload nginx"
+EOF
+
+cat > /etc/systemd/system/hzt-certbot-renew.timer <<'EOF'
+[Unit]
+Description=Renew hzt-infra TLS certificates every six hours
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=6h
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+nginx -t
+systemctl reload nginx
+systemctl daemon-reload
+systemctl enable --now hzt-certbot-renew.timer
 
 curl --fail --silent --show-error "$discovery_url" >/dev/null
 docker ps --filter 'name=hzt-infra-' --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
