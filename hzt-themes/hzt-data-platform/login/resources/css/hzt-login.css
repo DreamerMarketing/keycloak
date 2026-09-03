@@ -1,0 +1,286 @@
+:root {
+  --hzt-red: #ee3638;
+  --hzt-red-hover: #d92f33;
+  --hzt-carbon: #111827;
+  --hzt-graphite: #374151;
+  --hzt-pewter: #6b7280;
+  --hzt-cloud: #e5e7eb;
+  --hzt-white: #ffffff;
+}
+
+html,
+body,
+#keycloak-bg,
+.pf-v5-c-login,
+.pf-v5-c-login__container {
+  min-height: 100%;
+}
+
+html,
+body {
+  margin: 0;
+  background: #08090b;
+  color: var(--hzt-carbon);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+#keycloak-bg {
+  background: #08090b;
+}
+
+.pf-v5-c-login {
+  min-height: 100vh;
+  background: #08090b;
+}
+
+.pf-v5-c-login__container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(440px, 35vw);
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
+#kc-header {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  overflow: hidden;
+  padding: 116px clamp(36px, 7vw, 110px) 88px;
+  background:
+    linear-gradient(90deg, rgba(4, 5, 7, 0.96), rgba(4, 5, 7, 0.56) 48%, rgba(4, 5, 7, 0.88)),
+    linear-gradient(0deg, rgba(4, 5, 7, 0.78), rgba(4, 5, 7, 0.16) 48%, rgba(4, 5, 7, 0.58)),
+    url("../img/wedding-hero.jpg") center / cover no-repeat;
+  color: var(--hzt-white);
+}
+
+#kc-header::before {
+  content: "婚字头｜获客研究院";
+  position: absolute;
+  top: 26px;
+  left: clamp(28px, 6vw, 92px);
+  z-index: 2;
+  color: var(--hzt-white);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+#kc-header::after {
+  content: "七年深耕婚嫁数字营销，专注解决婚嫁中小企业线上盈利难题";
+  position: absolute;
+  bottom: 72px;
+  left: clamp(32px, 5vw, 76px);
+  z-index: 2;
+  max-width: 520px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.34);
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+#kc-header-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  color: transparent;
+  font-size: 0;
+  text-align: center;
+}
+
+#kc-header-wrapper::before {
+  content: "未来";
+  display: block;
+  color: var(--hzt-white);
+  font-family: "Kaiti SC", "STKaiti", "KaiTi", "Songti SC", serif;
+  font-size: clamp(92px, 9vw, 136px);
+  font-weight: 700;
+  line-height: 0.92;
+  text-shadow: 0 20px 58px rgba(0, 0, 0, 0.46);
+}
+
+#kc-header-wrapper::after {
+  content: "深圳婚字头网络科技有限公司";
+  display: block;
+  margin-top: 30px;
+  color: var(--hzt-white);
+  font-size: clamp(17px, 1.5vw, 22px);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.pf-v5-c-login__main {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 72px clamp(40px, 4.5vw, 92px) 42px;
+  border: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(249, 250, 251, 0.99));
+  box-shadow: -28px 0 80px rgba(0, 0, 0, 0.34);
+}
+
+.pf-v5-c-login__main-header,
+.pf-v5-c-login__main-body,
+.pf-v5-c-login__main-footer,
+.pf-v5-c-login__main-footer-band {
+  width: min(420px, 100%);
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.pf-v5-c-login__main-header {
+  border-top: 0;
+}
+
+#kc-page-title {
+  margin: 0 0 10px;
+  color: var(--hzt-carbon);
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.pf-v5-c-login__main-header::after {
+  content: "请使用账号或邮箱进入婚字头 AI 数据平台";
+  display: block;
+  margin: 0 0 32px;
+  color: var(--hzt-graphite);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.pf-v5-c-form {
+  row-gap: 18px;
+}
+
+.pf-v5-c-form__label-text,
+.pf-v5-c-check__label {
+  color: var(--hzt-graphite);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.pf-v5-c-form-control {
+  min-height: 48px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: var(--hzt-white);
+  color: var(--hzt-carbon);
+  box-shadow: none;
+}
+
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after {
+  border: 0;
+}
+
+.pf-v5-c-form-control:focus-within {
+  border-color: var(--hzt-red);
+  box-shadow: 0 0 0 2px rgba(238, 54, 56, 0.12);
+}
+
+.pf-v5-c-button.pf-m-control {
+  min-width: 48px;
+  min-height: 48px;
+  border-color: #d1d5db;
+  background: var(--hzt-white);
+  color: var(--hzt-pewter);
+}
+
+.pf-v5-c-button.pf-m-primary,
+#kc-login {
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: var(--hzt-red);
+  color: var(--hzt-white);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 18px 34px rgba(238, 54, 56, 0.24);
+  transition: background-color 0.16s ease, box-shadow 0.25s ease, transform 0.16s ease;
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+#kc-login:hover {
+  background: var(--hzt-red-hover);
+  box-shadow: 0 22px 42px rgba(238, 54, 56, 0.28);
+  transform: translateY(-1px);
+}
+
+a,
+.pf-v5-c-button.pf-m-link {
+  color: var(--hzt-pewter);
+}
+
+a:hover,
+.pf-v5-c-button.pf-m-link:hover {
+  color: var(--hzt-carbon);
+}
+
+.pf-v5-c-check__input {
+  accent-color: var(--hzt-red);
+}
+
+.pf-v5-c-alert.pf-m-danger {
+  border-color: rgba(238, 54, 56, 0.28);
+  background: #fff7f7;
+}
+
+.pf-v5-c-login__main > .pf-v5-c-login__main-footer:last-child::after {
+  content: "© 2026 婚字头 AI 数据平台，保留所有权利。";
+  display: block;
+  margin-top: 40px;
+  color: #9ca3af;
+  font-size: 14px;
+  line-height: 1.43;
+}
+
+@media (max-width: 900px) {
+  .pf-v5-c-login__container {
+    display: block;
+    background: var(--hzt-white);
+  }
+
+  #kc-header {
+    display: none;
+  }
+
+  .pf-v5-c-login__main {
+    min-height: 100vh;
+    padding: 56px 32px 32px;
+    box-shadow: none;
+  }
+
+  .pf-v5-c-login__main::before {
+    content: "婚字头｜获客研究院";
+    display: block;
+    width: min(420px, 100%);
+    margin: 0 auto 36px;
+    color: var(--hzt-carbon);
+    font-size: 18px;
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 520px) {
+  .pf-v5-c-login__main {
+    padding: 40px 24px 28px;
+  }
+
+  #kc-page-title {
+    font-size: 30px;
+  }
+}

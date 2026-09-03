@@ -67,6 +67,7 @@ ssh_options=(
 
 remote_host="${DEPLOY_USER}@${DEPLOY_HOST}"
 deploy_revision="${DEPLOY_REVISION:-unknown}"
+keycloak_image="hzt-infra-keycloak:${deploy_revision}"
 local_environment_file="$(mktemp)"
 trap 'rm -f "$local_environment_file"' EXIT
 chmod 600 "$local_environment_file"
@@ -85,15 +86,27 @@ printf 'POSTGRES_DB=%s\nPOSTGRES_USER=%s\nPOSTGRES_PASSWORD=%s\nKC_DB=postgres\n
 
 ssh "${ssh_options[@]}" "$remote_host" "install -d -m 700 '$DEPLOY_PATH'"
 scp "${ssh_options[@]}" "$local_environment_file" "${remote_host}:${DEPLOY_PATH}/.env.next"
+./mvnw -f providers/hzt-bcrypt-legacy/pom.xml -B clean verify
+scp "${ssh_options[@]}" Dockerfile.hzt-infra-keycloak "${remote_host}:${DEPLOY_PATH}/Dockerfile.hzt-infra-keycloak"
+ssh "${ssh_options[@]}" "$remote_host" "install -d -m 700 '$DEPLOY_PATH/providers/hzt-bcrypt-legacy/target'"
+scp "${ssh_options[@]}" providers/hzt-bcrypt-legacy/target/hzt-bcrypt-legacy.jar \
+  "${remote_host}:${DEPLOY_PATH}/providers/hzt-bcrypt-legacy/target/hzt-bcrypt-legacy.jar"
+ssh "${ssh_options[@]}" "$remote_host" \
+  "install -d -m 755 '$DEPLOY_PATH/hzt-themes' && rm -rf '$DEPLOY_PATH/hzt-themes/hzt-data-platform.next'"
+scp "${ssh_options[@]}" -r hzt-themes/hzt-data-platform \
+  "${remote_host}:${DEPLOY_PATH}/hzt-themes/hzt-data-platform.next"
+ssh "${ssh_options[@]}" "$remote_host" \
+  "rm -rf '$DEPLOY_PATH/hzt-themes/hzt-data-platform' && mv '$DEPLOY_PATH/hzt-themes/hzt-data-platform.next' '$DEPLOY_PATH/hzt-themes/hzt-data-platform'"
 
 ssh "${ssh_options[@]}" "$remote_host" bash -s -- \
-  "$DEPLOY_PATH" "$KEYCLOAK_HOSTNAME" "$DEPLOY_HOST" "$deploy_revision" <<'REMOTE_SCRIPT'
+  "$DEPLOY_PATH" "$KEYCLOAK_HOSTNAME" "$DEPLOY_HOST" "$deploy_revision" "$keycloak_image" <<'REMOTE_SCRIPT'
 set -Eeuo pipefail
 
 deploy_path="$1"
 keycloak_hostname="$2"
 public_ip="$3"
 deploy_revision="$4"
+keycloak_image="$5"
 environment_file="${deploy_path}/.env"
 network_name="hzt-infra"
 bootstrap_secret_present=false
@@ -120,6 +133,7 @@ docker network inspect "$network_name" >/dev/null 2>&1 || docker network create 
 
 docker pull postgres:16-alpine
 docker pull quay.io/keycloak/keycloak:26.7.3
+docker build --pull --no-cache -f "$deploy_path/Dockerfile.hzt-infra-keycloak" -t "$keycloak_image" "$deploy_path"
 
 docker rm -f hzt-infra-caddy hzt-infra-keycloak hzt-infra-postgres >/dev/null 2>&1 || true
 
@@ -154,7 +168,7 @@ start_keycloak() {
     --publish 127.0.0.1:8080:8080 \
     --env-file "$environment_file" \
     --label "hzt.deploy.revision=${deploy_revision}" \
-    quay.io/keycloak/keycloak:26.7.3 start >/dev/null
+    "$keycloak_image" start --optimized >/dev/null
 }
 
 start_keycloak
