@@ -3,9 +3,15 @@ ENV KC_HEALTH_ENABLED=true \
     KC_METRICS_ENABLED=true
 COPY providers/hzt-bcrypt-legacy/target/hzt-bcrypt-legacy.jar /opt/keycloak/providers/hzt-bcrypt-legacy.jar
 COPY hzt-themes/hzt-data-platform /opt/keycloak/themes/hzt-data-platform
-ADD --checksum=sha256:b5022c19c72ff59538c2dc5fd9e15142319a566daad3cb55cedd33fbd2e24872 \
+ADD --chmod=0644 --checksum=sha256:b5022c19c72ff59538c2dc5fd9e15142319a566daad3cb55cedd33fbd2e24872 \
     https://47.108.74.103/data-platform/brand-assets/wedding-hero.jpg \
     /opt/keycloak/themes/hzt-data-platform/login/resources/img/wedding-hero.jpg
+ADD --chmod=0644 --checksum=sha256:0d168a7f978909d3ad5e12f5d9cb1aff35953323b7eaf04b5930306ae7b3b288 \
+    https://47.108.74.103/data-platform/brand-assets/favicon-logo1-192.png \
+    /opt/keycloak/themes/hzt-data-platform/login/resources/img/favicon-logo1-192.png
+ADD --chmod=0644 --checksum=sha256:a68375b84d9e29da870b6c5b1d2ab3f8191fd4be91d6d257e50302326ac081a1 \
+    https://47.108.74.103/data-platform/brand-assets/logo21-full-trimmed.png \
+    /opt/keycloak/themes/hzt-data-platform/login/resources/img/logo21-full-trimmed.png
 RUN /opt/keycloak/bin/kc.sh build --db=postgres
 
 FROM quay.io/keycloak/keycloak:26.7.3
