@@ -1,286 +1,165 @@
 :root {
-  --hzt-red: #ee3638;
-  --hzt-red-hover: #d92f33;
-  --hzt-carbon: #111827;
-  --hzt-graphite: #374151;
-  --hzt-pewter: #6b7280;
-  --hzt-cloud: #e5e7eb;
-  --hzt-white: #ffffff;
+  --brand-red: #ee3638;
+  --brand-red-hover: #d92f33;
+  --white: #fff;
+  --carbon: #111827;
+  --graphite: #374151;
+  --pewter: #6b7280;
+  --fog: #9ca3af;
+  --cloud: #e5e7eb;
+  --silver: #d1d5db;
 }
 
-html,
-body,
-#keycloak-bg,
-.pf-v5-c-login,
-.pf-v5-c-login__container {
-  min-height: 100%;
-}
-
-html,
-body {
-  margin: 0;
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; }
+body.hzt-login-page {
+  overflow: hidden;
   background: #08090b;
-  color: var(--hzt-carbon);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--carbon);
+  font-family: "Universal Sans Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+button, input { font: inherit; }
+button, a { cursor: pointer; }
+a { text-decoration: none; }
+button:focus-visible, input:focus-visible, a:focus-visible {
+  outline: 2px solid rgba(238, 54, 56, .36);
+  outline-offset: 2px;
 }
 
-#keycloak-bg {
-  background: #08090b;
+.login-screen { min-height: 100vh; position: relative; overflow: hidden; background: #08090b; }
+.login-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 18% 20%, rgba(238, 54, 56, .16), transparent 30%),
+    radial-gradient(circle at 78% 24%, rgba(229, 173, 88, .18), transparent 26%);
 }
+.login-site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: max(440px, 35vw);
+  z-index: 10;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(28px, 6vw, 92px);
+  color: var(--white);
+  background: linear-gradient(180deg, rgba(4, 5, 7, .72), rgba(4, 5, 7, 0));
+  backdrop-filter: blur(10px);
+}
+.login-wordmark { display: flex; align-items: center; gap: 12px; color: var(--white); font-size: 18px; font-weight: 600; }
+.login-wordmark img { width: 34px; height: 34px; display: block; object-fit: contain; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .36)); }
 
-.pf-v5-c-login {
+.login-card {
+  width: 100%;
   min-height: 100vh;
-  background: #08090b;
-}
-
-.pf-v5-c-login__container {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(440px, 35vw);
-  width: 100%;
-  max-width: none;
-  padding: 0;
+  background: #08090b;
 }
-
-#kc-header {
-  position: relative;
-  grid-column: 1;
-  grid-row: 1;
-  display: grid;
+.login-visual {
   min-height: 100vh;
+  position: relative;
+  display: grid;
   place-items: center;
   overflow: hidden;
   padding: 116px clamp(36px, 7vw, 110px) 88px;
-  background:
-    linear-gradient(90deg, rgba(4, 5, 7, 0.96), rgba(4, 5, 7, 0.56) 48%, rgba(4, 5, 7, 0.88)),
-    linear-gradient(0deg, rgba(4, 5, 7, 0.78), rgba(4, 5, 7, 0.16) 48%, rgba(4, 5, 7, 0.58)),
+  color: var(--white);
+  isolation: isolate;
+  background: linear-gradient(90deg, rgba(4, 5, 7, .96), rgba(4, 5, 7, .56) 48%, rgba(4, 5, 7, .88)),
+    linear-gradient(0deg, rgba(4, 5, 7, .78), rgba(4, 5, 7, .16) 48%, rgba(4, 5, 7, .58)),
     url("../img/wedding-hero.jpg") center / cover no-repeat;
-  color: var(--hzt-white);
 }
-
-#kc-header::before {
-  content: "婚字头｜获客研究院";
+.login-visual::before {
+  content: "";
   position: absolute;
-  top: 26px;
-  left: clamp(28px, 6vw, 92px);
-  z-index: 2;
-  color: var(--hzt-white);
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 0 46%, rgba(255, 255, 255, .07) 46% 46.3%, transparent 46.3%),
+    radial-gradient(circle at 58% 36%, rgba(229, 173, 88, .28), transparent 24%);
+  mix-blend-mode: screen;
 }
-
-#kc-header::after {
-  content: "七年深耕婚嫁数字营销，专注解决婚嫁中小企业线上盈利难题";
+.login-visual::after {
+  content: "";
   position: absolute;
-  bottom: 72px;
-  left: clamp(32px, 5vw, 76px);
-  z-index: 2;
-  max-width: 520px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.34);
-  color: rgba(255, 255, 255, 0.74);
-  font-size: 15px;
-  line-height: 1.8;
+  left: -8%;
+  right: -8%;
+  bottom: -154px;
+  z-index: 0;
+  height: 180px;
+  border-radius: 50% 50% 0 0 / 82% 82% 0 0;
+  background: rgba(255, 255, 255, .98);
 }
+.login-copy { position: relative; z-index: 1; max-width: 660px; margin-top: -5vh; text-align: center; transform: translateY(38px); }
+.login-kicker { display: block; width: max-content; margin: 0 auto -8px; color: rgba(255, 255, 255, .72); font-size: 13px; line-height: 1.4; writing-mode: vertical-rl; }
+.future-mark { color: var(--white); font-family: "Kaiti SC", "STKaiti", "KaiTi", "Songti SC", serif; font-size: 136px; font-weight: 700; line-height: .92; text-shadow: 0 20px 58px rgba(0, 0, 0, .46); }
+.company-line { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 30px; color: var(--white); font-size: 22px; font-weight: 500; line-height: 1.35; }
+.company-line i { position: relative; width: 112px; height: 1px; background: rgba(255, 255, 255, .72); }
+.company-line i::after { content: ""; position: absolute; top: -3px; right: -4px; width: 7px; height: 7px; border-radius: 50%; background: var(--white); }
+.company-line i:last-child::after { right: auto; left: -4px; }
+.login-copy p { max-width: 520px; margin: 18px auto 0; color: rgba(255, 255, 255, .74); font-size: 15px; line-height: 1.8; }
+.login-visual-meta { position: absolute; left: clamp(32px, 5vw, 76px); bottom: 56px; z-index: 2; display: flex; gap: 18px; }
+.login-visual-meta div { min-width: 132px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .34); color: var(--white); text-shadow: 0 10px 24px rgba(0, 0, 0, .4); }
+.login-visual-meta strong, .login-visual-meta span { display: block; }
+.login-visual-meta strong { font-size: 28px; font-weight: 600; line-height: 1; }
+.login-visual-meta span { margin-top: 8px; color: rgba(255, 255, 255, .66); font-size: 13px; line-height: 1.4; }
 
-#kc-header-wrapper {
-  position: relative;
-  z-index: 1;
-  max-width: 720px;
-  color: transparent;
-  font-size: 0;
-  text-align: center;
-}
-
-#kc-header-wrapper::before {
-  content: "未来";
-  display: block;
-  color: var(--hzt-white);
-  font-family: "Kaiti SC", "STKaiti", "KaiTi", "Songti SC", serif;
-  font-size: clamp(92px, 9vw, 136px);
-  font-weight: 700;
-  line-height: 0.92;
-  text-shadow: 0 20px 58px rgba(0, 0, 0, 0.46);
-}
-
-#kc-header-wrapper::after {
-  content: "深圳婚字头网络科技有限公司";
-  display: block;
-  margin-top: 30px;
-  color: var(--hzt-white);
-  font-size: clamp(17px, 1.5vw, 22px);
-  font-weight: 500;
-  line-height: 1.35;
-}
-
-.pf-v5-c-login__main {
-  grid-column: 2;
-  grid-row: 1;
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 100%;
-  max-width: none;
+.login-form-panel {
   min-height: 100vh;
-  margin: 0;
-  padding: 72px clamp(40px, 4.5vw, 92px) 42px;
-  border: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(249, 250, 251, 0.99));
-  box-shadow: -28px 0 80px rgba(0, 0, 0, 0.34);
+  position: relative;
+  z-index: 3;
+  display: grid;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(249, 250, 251, .98)), var(--white);
+  box-shadow: -28px 0 80px rgba(0, 0, 0, .34);
 }
-
-.pf-v5-c-login__main-header,
-.pf-v5-c-login__main-body,
-.pf-v5-c-login__main-footer,
-.pf-v5-c-login__main-footer-band {
-  width: min(420px, 100%);
-  margin-right: auto;
-  margin-left: auto;
-  padding-right: 0;
-  padding-left: 0;
-}
-
-.pf-v5-c-login__main-header {
-  border-top: 0;
-}
-
-#kc-page-title {
-  margin: 0 0 10px;
-  color: var(--hzt-carbon);
-  font-size: 36px;
-  font-weight: 500;
-  line-height: 1.2;
-}
-
-.pf-v5-c-login__main-header::after {
-  content: "请使用账号或邮箱进入婚字头 AI 数据平台";
-  display: block;
-  margin: 0 0 32px;
-  color: var(--hzt-graphite);
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.pf-v5-c-form {
-  row-gap: 18px;
-}
-
-.pf-v5-c-form__label-text,
-.pf-v5-c-check__label {
-  color: var(--hzt-graphite);
-  font-size: 14px;
-  font-weight: 400;
-}
-
-.pf-v5-c-form-control {
-  min-height: 48px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  background: var(--hzt-white);
-  color: var(--hzt-carbon);
-  box-shadow: none;
-}
-
-.pf-v5-c-form-control::before,
-.pf-v5-c-form-control::after {
-  border: 0;
-}
-
-.pf-v5-c-form-control:focus-within {
-  border-color: var(--hzt-red);
-  box-shadow: 0 0 0 2px rgba(238, 54, 56, 0.12);
-}
-
-.pf-v5-c-button.pf-m-control {
-  min-width: 48px;
-  min-height: 48px;
-  border-color: #d1d5db;
-  background: var(--hzt-white);
-  color: var(--hzt-pewter);
-}
-
-.pf-v5-c-button.pf-m-primary,
-#kc-login {
-  min-height: 48px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: var(--hzt-red);
-  color: var(--hzt-white);
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 18px 34px rgba(238, 54, 56, 0.24);
-  transition: background-color 0.16s ease, box-shadow 0.25s ease, transform 0.16s ease;
-}
-
-.pf-v5-c-button.pf-m-primary:hover,
-#kc-login:hover {
-  background: var(--hzt-red-hover);
-  box-shadow: 0 22px 42px rgba(238, 54, 56, 0.28);
-  transform: translateY(-1px);
-}
-
-a,
-.pf-v5-c-button.pf-m-link {
-  color: var(--hzt-pewter);
-}
-
-a:hover,
-.pf-v5-c-button.pf-m-link:hover {
-  color: var(--hzt-carbon);
-}
-
-.pf-v5-c-check__input {
-  accent-color: var(--hzt-red);
-}
-
-.pf-v5-c-alert.pf-m-danger {
-  border-color: rgba(238, 54, 56, 0.28);
-  background: #fff7f7;
-}
-
-.pf-v5-c-login__main > .pf-v5-c-login__main-footer:last-child::after {
-  content: "© 2026 婚字头 AI 数据平台，保留所有权利。";
-  display: block;
-  margin-top: 40px;
-  color: #9ca3af;
-  font-size: 14px;
-  line-height: 1.43;
-}
+.login-form-inner { width: min(420px, calc(100% - 64px)); margin: 0 auto; padding: 100px 0 42px; position: relative; z-index: 1; transform: translateY(42px); }
+.mobile-brand { display: none; margin-bottom: 34px; }
+.mobile-brand img { width: 156px; height: auto; display: block; object-fit: contain; }
+.auth-tabs { width: max-content; display: inline-flex; align-items: center; gap: 4px; margin: 0 0 28px; padding: 4px; border: 1px solid var(--cloud); border-radius: 8px; background: #f5f1ee; }
+.auth-tabs button, .auth-tabs a, .auth-tabs span { min-width: 72px; min-height: 34px; border: 0; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--graphite); font-size: 14px; font-weight: 500; }
+.auth-tabs .active { background: var(--carbon); color: var(--white); box-shadow: 0 10px 24px rgba(17, 24, 39, .18); }
+.auth-tabs span[aria-disabled="true"] { color: var(--fog); cursor: default; }
+.login-form-inner h1 { margin: 0 0 10px; color: var(--carbon); font-family: "Universal Sans Display", "Universal Sans Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; font-size: 36px; font-weight: 500; line-height: 1.2; }
+.login-subtitle { margin: 0 0 38px; color: var(--graphite); font-size: 14px; line-height: 1.7; }
+.login-alert { margin: -18px 0 22px; padding: 12px 14px; border: 1px solid rgba(238, 54, 56, .28); border-radius: 4px; background: #fff7f7; color: var(--carbon); font-size: 14px; line-height: 1.43; }
+.login-form { display: grid; gap: 22px; }
+.login-field { display: grid; gap: 8px; }
+.login-field > label { color: var(--graphite); font-size: 14px; font-weight: 400; line-height: 1.43; }
+.login-field-control { min-height: 50px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid var(--silver); border-radius: 4px; background: var(--white); color: var(--pewter); transition: border-color .16s ease, box-shadow .16s ease; }
+.login-field-control:focus-within { border-color: var(--brand-red); box-shadow: 0 0 0 2px rgba(238, 54, 56, .12); }
+.login-field-control.has-error { border-color: var(--brand-red); }
+.login-field-control > i { width: 20px; flex: 0 0 20px; color: var(--pewter); font-size: 18px; text-align: center; }
+.login-field-control input { min-width: 0; height: 48px; flex: 1; padding: 0; border: 0; outline: 0; background: transparent; color: var(--carbon); font-size: 14px; }
+.field-error { margin: 0; color: var(--brand-red); font-size: 13px; line-height: 1.4; }
+.password-toggle { width: 32px; height: 38px; margin-right: -6px; border: 0; border-radius: 4px; background: transparent; color: var(--fog); }
+.password-toggle:hover { color: var(--carbon); }
+.login-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.remember-control { display: inline-flex; align-items: center; gap: 10px; color: var(--graphite); font-size: 14px; cursor: pointer; }
+.remember-control input { width: 18px; height: 18px; margin: 0; accent-color: var(--brand-red); }
+.forgot-link { color: var(--pewter); font-size: 14px; }
+.forgot-link:hover { color: var(--carbon); }
+.login-submit { width: 100%; min-height: 48px; margin-top: 6px; border: 1px solid transparent; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: var(--brand-red); color: var(--white); font-size: 14px; font-weight: 500; box-shadow: 0 18px 34px rgba(238, 54, 56, .24); transition: background-color .16s ease, box-shadow .25s ease, transform .16s ease; }
+.login-submit:hover { background: var(--brand-red-hover); box-shadow: 0 22px 42px rgba(238, 54, 56, .28); transform: translateY(-1px); }
+.login-mode-switch { justify-self: center; color: var(--pewter); font-size: 14px; }
+.login-mode-switch:hover { color: var(--carbon); }
+.login-footer { margin: 56px 0 0; color: var(--fog); font-size: 14px; line-height: 1.43; }
 
 @media (max-width: 900px) {
-  .pf-v5-c-login__container {
-    display: block;
-    background: var(--hzt-white);
-  }
-
-  #kc-header {
-    display: none;
-  }
-
-  .pf-v5-c-login__main {
-    min-height: 100vh;
-    padding: 56px 32px 32px;
-    box-shadow: none;
-  }
-
-  .pf-v5-c-login__main::before {
-    content: "婚字头｜获客研究院";
-    display: block;
-    width: min(420px, 100%);
-    margin: 0 auto 36px;
-    color: var(--hzt-carbon);
-    font-size: 18px;
-    font-weight: 600;
-  }
+  body.hzt-login-page { overflow: auto; background: var(--white); }
+  .login-card { display: block; background: var(--white); }
+  .login-site-nav, .login-visual { display: none; }
+  .login-form-panel { min-height: 100vh; box-shadow: none; }
+  .login-form-inner { width: min(420px, calc(100% - 48px)); padding: 48px 0 32px; transform: none; }
+  .mobile-brand { display: flex; }
 }
-
 @media (max-width: 520px) {
-  .pf-v5-c-login__main {
-    padding: 40px 24px 28px;
-  }
-
-  #kc-page-title {
-    font-size: 30px;
-  }
+  .login-form-inner { width: calc(100% - 40px); padding: 36px 0 28px; }
+  .login-form-inner h1 { font-size: 30px; }
+  .login-subtitle { margin-bottom: 30px; }
+  .login-footer { margin-top: 36px; }
 }
