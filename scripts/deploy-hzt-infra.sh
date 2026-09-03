@@ -91,6 +91,12 @@ scp "${ssh_options[@]}" Dockerfile.hzt-infra-keycloak "${remote_host}:${DEPLOY_P
 ssh "${ssh_options[@]}" "$remote_host" "install -d -m 700 '$DEPLOY_PATH/providers/hzt-bcrypt-legacy/target'"
 scp "${ssh_options[@]}" providers/hzt-bcrypt-legacy/target/hzt-bcrypt-legacy.jar \
   "${remote_host}:${DEPLOY_PATH}/providers/hzt-bcrypt-legacy/target/hzt-bcrypt-legacy.jar"
+ssh "${ssh_options[@]}" "$remote_host" \
+  "install -d -m 755 '$DEPLOY_PATH/hzt-themes' && rm -rf '$DEPLOY_PATH/hzt-themes/hzt-data-platform.next'"
+scp "${ssh_options[@]}" -r hzt-themes/hzt-data-platform \
+  "${remote_host}:${DEPLOY_PATH}/hzt-themes/hzt-data-platform.next"
+ssh "${ssh_options[@]}" "$remote_host" \
+  "rm -rf '$DEPLOY_PATH/hzt-themes/hzt-data-platform' && mv '$DEPLOY_PATH/hzt-themes/hzt-data-platform.next' '$DEPLOY_PATH/hzt-themes/hzt-data-platform'"
 
 ssh "${ssh_options[@]}" "$remote_host" bash -s -- \
   "$DEPLOY_PATH" "$KEYCLOAK_HOSTNAME" "$DEPLOY_HOST" "$deploy_revision" "$keycloak_image" <<'REMOTE_SCRIPT'
