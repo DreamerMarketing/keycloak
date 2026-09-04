@@ -163,3 +163,8 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   .login-subtitle { margin-bottom: 30px; }
   .login-footer { margin-top: 36px; }
 }
+
+/* Required password updates share the login layout and remain scrollable with policy errors. */
+body.hzt-password-page { overflow: auto; }
+.hzt-password-page .login-form-inner { padding: 48px 0 32px; transform: none; }
+.password-cancel { padding: 0; border: 0; background: transparent; }
