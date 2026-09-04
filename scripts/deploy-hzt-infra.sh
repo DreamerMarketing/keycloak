@@ -236,6 +236,13 @@ fi
 obtain_certificate() {
   local identifier="$1"
   shift
+  # Reuse a valid certificate during deployment; the renewal timer handles renewal.
+  # Avoid taking HTTPS offline for an unnecessary ACME request.
+  if [[ -s "/etc/letsencrypt/live/${identifier}/fullchain.pem" ]] && \
+     openssl x509 -checkend 86400 -noout \
+       -in "/etc/letsencrypt/live/${identifier}/fullchain.pem" >/dev/null; then
+    return 0
+  fi
   systemctl stop nginx
   if ! certbot certonly \
     --standalone \
