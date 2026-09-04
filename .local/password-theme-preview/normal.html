@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html class="login-pf" lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>设置新密码</title>
+  <link rel="icon" href="/resources/img/favicon-logo1-192.png">
+      <link href="common/vendor/patternfly-v5/patternfly.min.css" rel="stylesheet">
+      <link href="common/vendor/patternfly-v5/patternfly-addons.css" rel="stylesheet">
+      <link href="/resources/css/hzt-login.css" rel="stylesheet">
+  <script type="module" src="/resources/js/passwordVisibility.js"></script>
+</head>
+<body class="hzt-login-page hzt-password-page">
+  <main class="login-screen">
+    <header class="login-site-nav" aria-label="登录页导航">
+      <div class="login-wordmark">
+        <img src="/resources/img/favicon-logo1-192.png" alt="">
+        <span>婚字头｜获客研究院</span>
+      </div>
+    </header>
+
+    <section class="login-card" aria-label="婚字头 AI 数据平台修改密码">
+      <aside class="login-visual">
+        <div class="login-copy" aria-hidden="true">
+          <span class="login-kicker">IN THE FUTURE</span>
+          <div class="future-mark">未来</div>
+          <div class="company-line"><i></i><strong>深圳婚字头网络科技有限公司</strong><i></i></div>
+          <p>七年深耕婚嫁数字营销，专注解决婚嫁中小企业线上盈利难题</p>
+        </div>
+        <div class="login-visual-meta" aria-label="品牌能力">
+          <div><strong>7年</strong><span>婚嫁数字营销</span></div>
+          <div><strong>AI</strong><span>数据经营平台</span></div>
+        </div>
+      </aside>
+
+      <section class="login-form-panel">
+        <div class="login-form-inner">
+          <div class="mobile-brand"><img src="/resources/img/logo21-full-trimmed.png" alt="婚字头"></div>
+          <h1>设置新密码</h1>
+          <p class="login-subtitle">请设置新密码，继续进入婚字头 AI 数据平台。</p>
+
+            <div class="login-alert login-alert-warning" role="alert">您需要修改密码以激活账号。</div>
+
+          <form id="kc-passwd-update-form" class="login-form" action="/test-password-action" method="post">
+              <div class="login-field password-field">
+                <label for="password-new">新密码</label>
+                <div class="login-field-control ">
+                  <i class="fas fa-lock" aria-hidden="true"></i>
+                  <input id="password-new" name="password-new" type="password" autocomplete="new-password" required autofocus aria-invalid="false" aria-describedby="input-error-container-password-new">
+                  <button class="password-toggle" type="button" aria-label="showPassword" aria-controls="password-new" data-password-toggle data-icon-show="fa-eye fas" data-icon-hide="fa-eye-slash fas" data-label-show="showPassword" data-label-hide="hidePassword">
+                    <i class="fa-eye fas" aria-hidden="true"></i>
+                  </button>
+                </div>
+                <div id="input-error-container-password-new" class="field-error" aria-live="polite">
+                </div>
+              </div>
+              <div class="login-field password-field">
+                <label for="password-confirm">确认密码</label>
+                <div class="login-field-control ">
+                  <i class="fas fa-lock" aria-hidden="true"></i>
+                  <input id="password-confirm" name="password-confirm" type="password" autocomplete="new-password" required  aria-invalid="false" aria-describedby="input-error-container-password-confirm">
+                  <button class="password-toggle" type="button" aria-label="showPassword" aria-controls="password-confirm" data-password-toggle data-icon-show="fa-eye fas" data-icon-hide="fa-eye-slash fas" data-label-show="showPassword" data-label-hide="hidePassword">
+                    <i class="fa-eye fas" aria-hidden="true"></i>
+                  </button>
+                </div>
+                <div id="input-error-container-password-confirm" class="field-error" aria-live="polite">
+                </div>
+              </div>
+
+            <div class="login-row">
+              <label class="remember-control" for="logout-sessions">
+                <input id="logout-sessions" name="logout-sessions" type="checkbox" value="on">
+                <span>退出其他设备上的登录</span>
+              </label>
+            </div>
+            <button id="kc-submit" name="login" class="login-submit" type="submit">
+              <span>保存</span><i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </button>
+          </form>
+    <template id="errorTemplate">
+        <div class="pf-v5-c-form__helper-text" aria-live="polite">
+            <div class="pf-v5-c-helper-text pf-v5-u-display-flex pf-v5-u-justify-content-space-between">
+                <div class="pf-v5-c-helper-text__item pf-m-error">
+                    <ul class="pf-v5-c-helper-text__item-text pf-m-error kc-feedback-text">
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template id="errorItemTemplate">
+        <li></li>
+    </template>
+    <script type="module">
+        import { validatePassword } from "/resources/js/password-policy.js";
+
+        const activePolicies = [
+            { name: "length", policy: { value: 8, error: "invalidPasswordMinLengthMessage" } },
+            { name: "maxLength", policy: { value: -1, error: "invalidPasswordMaxLengthMessage" } },
+            { name: "lowerCase", policy: { value: -1, error: "invalidPasswordMinLowerCaseCharsMessage" } },
+            { name: "upperCase", policy: { value: -1, error: "invalidPasswordMinUpperCaseCharsMessage" } },
+            { name: "digits", policy: { value: -1, error: "invalidPasswordMinDigitsMessage" } },
+            { name: "specialChars", policy: { value: -1, error: "invalidPasswordMinSpecialCharsMessage" } }
+        ].filter(p => p.policy.value !== -1);
+
+        document.getElementById("password-new").addEventListener("change", (event) => {
+
+            const errorContainer = document.getElementById("input-error-container-password-new");
+            const template = document.querySelector("#errorTemplate").content.cloneNode(true);
+            const errors = validatePassword(event.target.value, activePolicies);
+
+            if (errors.length === 0) {
+                errorContainer.replaceChildren();
+                return;
+            }
+
+            const errorList = template.querySelector("ul");
+            const htmlErrors = errors.forEach((e) => {
+                const row = document.querySelector("#errorItemTemplate").content.cloneNode(true);
+                const li = row.querySelector("li");
+                li.textContent = e;
+                errorList.appendChild(li);
+            });
+            errorContainer.replaceChildren(template);
+        });
+    </script>
+          <footer class="login-footer">© 2026 婚字头 AI 数据平台，保留所有权利。</footer>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>
