@@ -28,10 +28,47 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Set up Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Load deployment environment from Vaultwarden
+        env:
+          VAULTWARDEN_SERVER: ${{ vars.VAULTWARDEN_SERVER }}
+          VAULTWARDEN_CLIENT_ID: ${{ secrets.VAULTWARDEN_CLIENT_ID }}
+          VAULTWARDEN_CLIENT_SECRET: ${{ secrets.VAULTWARDEN_CLIENT_SECRET }}
+          VAULTWARDEN_MASTER_PASSWORD: ${{ secrets.VAULTWARDEN_MASTER_PASSWORD }}
+          VAULTWARDEN_ITEM_ID: ${{ vars.VAULTWARDEN_ITEM_ID }}
+        run: |
+          set -euo pipefail
+          for name in VAULTWARDEN_SERVER VAULTWARDEN_CLIENT_ID VAULTWARDEN_CLIENT_SECRET VAULTWARDEN_MASTER_PASSWORD VAULTWARDEN_ITEM_ID; do
+            if [[ -z "${!name}" ]]; then
+              echo "Missing required Vaultwarden setting: ${name}" >&2
+              exit 1
+            fi
+          done
+          if ! command -v bw >/dev/null 2>&1; then
+            npm install --global @bitwarden/cli >/dev/null
+          else
+            echo "Reusing cached Bitwarden CLI: $(bw --version)"
+          fi
+          bw config server "$VAULTWARDEN_SERVER" >/dev/null
+          export BW_CLIENTID="$VAULTWARDEN_CLIENT_ID"
+          export BW_CLIENTSECRET="$VAULTWARDEN_CLIENT_SECRET"
+          export BW_PASSWORD="$VAULTWARDEN_MASTER_PASSWORD"
+          bw login --apikey >/dev/null
+          BW_SESSION="$(bw unlock --passwordenv BW_PASSWORD --raw)"
+          export BW_SESSION
+          bw sync >/dev/null
+          vault_item_file="$(mktemp)"
+          trap 'rm -f "$vault_item_file"; bw logout >/dev/null 2>&1 || true' EXIT
+          bw get item "$VAULTWARDEN_ITEM_ID" > "$vault_item_file"
+          node scripts/vaultwarden-item-to-github-env.mjs "$vault_item_file" "$GITHUB_ENV"
+
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS }}
         run: |
           install -m 700 -d "${RUNNER_TEMP}/ssh"
           printf '%s\n' "$SSH_PRIVATE_KEY" > "${RUNNER_TEMP}/ssh/hzt-infra"
@@ -40,16 +77,7 @@ jobs:
 
       - name: Deploy
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           DEPLOY_SSH_KEY: ${{ runner.temp }}/ssh/hzt-infra
           DEPLOY_KNOWN_HOSTS: ${{ runner.temp }}/ssh/known_hosts
-          KEYCLOAK_HOSTNAME: ${{ vars.KEYCLOAK_HOSTNAME }}
-          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
-          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME: ${{ vars.KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME }}
-          KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD }}
           DEPLOY_REVISION: ${{ github.sha }}
         run: scripts/deploy-hzt-infra.sh
