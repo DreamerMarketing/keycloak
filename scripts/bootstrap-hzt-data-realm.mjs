@@ -69,6 +69,10 @@ if (existingRealm.response.status === 404) {
       enabled: true,
       organizationsEnabled: true,
       accessTokenLifespan: 300,
+      ssoSessionIdleTimeout: 2592000,
+      ssoSessionMaxLifespan: 31536000,
+      clientSessionIdleTimeout: 2592000,
+      clientSessionMaxLifespan: 31536000,
       eventsEnabled: true,
       registrationAllowed: false,
       resetPasswordAllowed: true,
@@ -122,7 +126,12 @@ const webClientUuid = await ensureClient(webClientId, {
   serviceAccountsEnabled: false,
   redirectUris: [webRedirectUri],
   webOrigins: [webOrigin],
-  attributes: { "pkce.code.challenge.method": "S256" }
+  attributes: {
+    "pkce.code.challenge.method": "S256",
+    "client.session.idle.timeout": "2592000",
+    "client.session.max.lifespan": "31536000",
+    "access.token.lifespan": "300"
+  }
 });
 const apiClientUuid = await ensureClient(apiClientId, {
   name: "HZT Data Platform API",
