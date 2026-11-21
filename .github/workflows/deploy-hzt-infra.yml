@@ -48,11 +48,9 @@ jobs:
               exit 1
             fi
           done
-          if ! command -v bw >/dev/null 2>&1; then
-            npm install --global @bitwarden/cli >/dev/null
-          else
-            echo "Reusing cached Bitwarden CLI: $(bw --version)"
-          fi
+          vault_cli_dir="$RUNNER_TEMP/hzt-vault-cli"
+          npm install --prefix "$vault_cli_dir" --no-save --package-lock=false @bitwarden/cli@2025.8.0 >/dev/null
+          export PATH="$vault_cli_dir/node_modules/.bin:$PATH"
           bw config server "$VAULTWARDEN_SERVER" >/dev/null
           export BW_CLIENTID="$VAULTWARDEN_CLIENT_ID"
           export BW_CLIENTSECRET="$VAULTWARDEN_CLIENT_SECRET"
