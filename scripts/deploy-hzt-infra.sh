@@ -260,6 +260,7 @@ if ! command -v certbot >/dev/null 2>&1; then
 fi
 
 nginx_config="/etc/nginx/conf.d/hzt-infra.conf"
+if [[ ! -s "/etc/letsencrypt/live/${keycloak_hostname}/fullchain.pem" || ! -s "$nginx_config" ]]; then
 cat > "$nginx_config" <<EOF
 server {
     listen 80;
@@ -285,6 +286,7 @@ EOF
 
 nginx -t
 systemctl reload nginx
+fi
 
 local_discovery_url="http://127.0.0.1:8080/realms/master/.well-known/openid-configuration"
 discovery_url="https://${keycloak_hostname}/realms/master/.well-known/openid-configuration"
@@ -358,17 +360,6 @@ server {
 EOF
 
 if [[ "$domain_certificate_available" == true ]]; then
-  ca_bundle=""
-  for candidate in /etc/ssl/certs/ca-certificates.crt /etc/pki/tls/certs/ca-bundle.crt /etc/ssl/cert.pem; do
-    if [[ -s "$candidate" ]]; then
-      ca_bundle="$candidate"
-      break
-    fi
-  done
-  if [[ -z "$ca_bundle" ]]; then
-    echo "No system CA bundle found for the site-brand proxy" >&2
-    exit 1
-  fi
   cat >> "$nginx_config" <<EOF
 server {
     listen 443 ssl;
@@ -378,19 +369,6 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/${keycloak_hostname}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${keycloak_hostname}/privkey.pem;
-
-    location = /data-platform-site-brand {
-        limit_except GET { deny all; }
-        proxy_pass_request_headers off;
-        proxy_pass_request_body off;
-        proxy_set_header Host data.hztcloud.cn;
-        proxy_ssl_server_name on;
-        proxy_ssl_verify on;
-        proxy_ssl_trusted_certificate ${ca_bundle};
-        proxy_connect_timeout 2s;
-        proxy_read_timeout 2s;
-        proxy_pass https://data.hztcloud.cn/data-platform/api/site-brand;
-    }
 
     location / {
         proxy_http_version 1.1;

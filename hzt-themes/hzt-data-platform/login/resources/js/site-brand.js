@@ -2,7 +2,7 @@ const brandAssetBase = "https://data.hztcloud.cn/data-platform/brand-assets/";
 const platform = "矩阵智联 AI 数据平台";
 
 async function loadSiteBrand() {
-  const response = await fetch("/data-platform-site-brand", {
+  const response = await fetch("https://data.hztcloud.cn/data-platform/api/site-brand", {
     cache: "no-store",
     credentials: "omit",
     signal: AbortSignal.timeout(2500)
