@@ -173,3 +173,13 @@ body.hzt-password-page { overflow: auto; }
 .hzt-login-page[data-site-brand="matrix"] .login-visual-meta > div:first-child {
   display: none;
 }
+
+/* Keep the form usable while hiding brand-specific artwork during lookup. */
+.hzt-login-page[data-site-brand-pending] :is(.login-wordmark, .login-copy, .login-visual-meta, .mobile-brand, .login-subtitle, .login-footer) {
+  visibility: hidden;
+  animation: reveal-default-brand 0s 3s forwards;
+}
+
+@keyframes reveal-default-brand {
+  to { visibility: visible; }
+}

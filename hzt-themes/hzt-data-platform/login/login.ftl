@@ -1,3 +1,4 @@
+<#assign followsSiteBrand = ((client.clientId)!"") == "hzt-web">
 <#import "field.ftl" as field>
 <!DOCTYPE html>
 <html class="${properties.kcHtmlClass!}" lang="${lang}">
@@ -6,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>${msg("loginAccountTitle")}</title>
-  <link rel="icon" href="${url.resourcesPath}/img/favicon-logo1-192.png">
+  <link rel="icon" <#if followsSiteBrand>data-default-icon<#else>href</#if>="${url.resourcesPath}/img/favicon-logo1-192.png">
   <#if properties.stylesCommon?has_content>
     <#list properties.stylesCommon?split(' ') as style>
       <link href="${url.resourcesCommonPath}/${style}" rel="stylesheet">
@@ -18,11 +19,11 @@
     </#list>
   </#if>
   <script type="module" src="${url.resourcesPath}/js/passwordVisibility.js"></script>
-  <#if ((client.clientId)!"") == "hzt-web">
+  <#if followsSiteBrand>
     <script type="module" src="${url.resourcesPath}/js/site-brand.js"></script>
   </#if>
 </head>
-<body class="hzt-login-page">
+<body class="hzt-login-page"<#if followsSiteBrand> data-site-brand-pending</#if>>
   <main class="login-screen">
     <header class="login-site-nav" aria-label="登录页导航">
       <div class="login-wordmark">

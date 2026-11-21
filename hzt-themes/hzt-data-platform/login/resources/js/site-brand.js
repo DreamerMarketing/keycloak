@@ -38,4 +38,8 @@ async function loadSiteBrand() {
   if (footer) footer.textContent = footer.textContent.replace("婚字头 AI 数据平台", platform);
 }
 
-void loadSiteBrand().catch(() => {});
+void loadSiteBrand().catch(() => {}).finally(() => {
+  const favicon = document.querySelector('link[rel="icon"][data-default-icon]');
+  if (favicon && !favicon.hasAttribute("href")) favicon.href = favicon.dataset.defaultIcon;
+  document.body.removeAttribute("data-site-brand-pending");
+});
