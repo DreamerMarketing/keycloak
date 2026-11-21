@@ -368,6 +368,19 @@ server {
     ssl_certificate /etc/letsencrypt/live/${keycloak_hostname}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${keycloak_hostname}/privkey.pem;
 
+    location = /data-platform-site-brand {
+        limit_except GET { deny all; }
+        proxy_pass_request_headers off;
+        proxy_pass_request_body off;
+        proxy_set_header Host data.hztcloud.cn;
+        proxy_ssl_server_name on;
+        proxy_ssl_verify on;
+        proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+        proxy_connect_timeout 2s;
+        proxy_read_timeout 2s;
+        proxy_pass https://data.hztcloud.cn/data-platform/api/site-brand;
+    }
+
     location / {
         proxy_http_version 1.1;
         proxy_set_header Host \$host;

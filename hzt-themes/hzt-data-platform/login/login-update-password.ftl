@@ -18,6 +18,9 @@
     </#list>
   </#if>
   <script type="module" src="${url.resourcesPath}/js/passwordVisibility.js"></script>
+  <#if ((client.clientId)!"") == "hzt-web">
+    <script type="module" src="${url.resourcesPath}/js/site-brand.js"></script>
+  </#if>
 </head>
 <body class="hzt-login-page hzt-password-page">
   <main class="login-screen">

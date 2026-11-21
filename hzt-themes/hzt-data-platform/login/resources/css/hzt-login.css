@@ -168,3 +168,8 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 body.hzt-password-page { overflow: auto; }
 .hzt-password-page .login-form-inner { padding: 48px 0 32px; transform: none; }
 .password-cancel { padding: 0; border: 0; background: transparent; }
+
+.hzt-login-page[data-site-brand="matrix"] .login-copy p,
+.hzt-login-page[data-site-brand="matrix"] .login-visual-meta > div:first-child {
+  display: none;
+}
